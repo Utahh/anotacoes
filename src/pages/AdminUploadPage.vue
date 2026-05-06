@@ -37,7 +37,14 @@
 
           <div class="row q-col-gutter-sm">
             <div class="col">
-              <q-btn class="full-width" label="Salvar" type="submit" color="primary" unelevated />
+              <q-btn
+                class="full-width"
+                label="Salvar"
+                type="submit"
+                color="primary"
+                unelevated
+                :loading="store.loading"
+              />
             </div>
             <div class="col">
               <q-btn class="full-width" label="Limpar" flat color="grey-7" @click="resetForm" />
@@ -47,7 +54,14 @@
       </q-card>
 
       <div class="q-mt-xl">
-        <div class="text-subtitle1 text-weight-medium text-grey-8 q-mb-sm">Ultimos uploads (mock)</div>
+        <q-banner
+          v-if="store.usingMock"
+          class="bg-amber-1 text-amber-10 rounded-borders q-mb-md"
+        >
+          Sem credenciais Supabase: uploads salvos apenas em memoria local.
+        </q-banner>
+
+        <div class="text-subtitle1 text-weight-medium text-grey-8 q-mb-sm">Ultimos uploads</div>
         <q-list bordered separator class="bg-white rounded-borders">
           <q-item v-for="item in newestUploads" :key="item.id">
             <q-item-section>
@@ -70,14 +84,15 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
-import { mockFormDefaults, mockItems } from 'src/data/mockContent'
+import { mockFormDefaults } from 'src/data/mockContent'
+import { useContentStore } from 'src/stores/content'
 
 const $q = useQuasar()
 const router = useRouter()
-const uploads = ref([...mockItems])
+const store = useContentStore()
 
 const form = reactive({
   ...mockFormDefaults,
@@ -90,7 +105,7 @@ const tipoOptions = [
 
 const requiredRule = (val) => !!val || 'Campo obrigatorio'
 
-const newestUploads = computed(() => [...uploads.value].reverse().slice(0, 5))
+const newestUploads = computed(() => store.sortedItems.slice(0, 5))
 
 const resetForm = () => {
   form.titulo = ''
@@ -100,30 +115,40 @@ const resetForm = () => {
   form.arquivo = null
 }
 
-const submitForm = () => {
-  const fakeUrl = form.arquivo ? URL.createObjectURL(form.arquivo) : ''
+const submitForm = async () => {
+  try {
+    const { fromMock } = await store.addItem({
+      titulo: form.titulo,
+      legenda: form.legenda,
+      data: form.data,
+      tipo: form.tipo,
+      arquivo: form.arquivo,
+    })
 
-  uploads.value.push({
-    id: Date.now(),
-    titulo: form.titulo,
-    legenda: form.legenda,
-    data: form.data,
-    tipo: form.tipo,
-    url: fakeUrl,
-  })
+    $q.notify({
+      type: 'positive',
+      message: fromMock
+        ? 'Conteudo salvo no mock local com sucesso.'
+        : 'Conteudo salvo no Supabase com sucesso.',
+      timeout: 1800,
+    })
 
-  $q.notify({
-    type: 'positive',
-    message: 'Conteudo salvo no mock local com sucesso.',
-    timeout: 1800,
-  })
-
-  resetForm()
+    resetForm()
+  } catch {
+    $q.notify({
+      type: 'negative',
+      message: store.lastError || 'Erro ao salvar conteudo.',
+    })
+  }
 }
 
 const goBack = () => {
   router.push('/menu')
 }
+
+onMounted(() => {
+  store.loadItems()
+})
 </script>
 
 <style scoped>

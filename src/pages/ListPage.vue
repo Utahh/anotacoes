@@ -9,6 +9,18 @@
       </div>
 
       <div class="q-gutter-y-md">
+        <div v-if="store.loading" class="row justify-center q-pa-lg">
+          <q-spinner color="primary" size="2em" />
+        </div>
+
+        <q-banner
+          v-if="store.usingMock"
+          inline-actions
+          class="bg-amber-1 text-amber-10 rounded-borders"
+        >
+          Exibindo dados mock. Configure o Supabase para dados reais.
+        </q-banner>
+
         <q-card v-for="item in filteredItems" :key="item.id" class="my-card shadow-2 rounded-borders">
           <q-card-section class="row items-center no-wrap">
             <div class="col">
@@ -30,7 +42,7 @@
           </q-card-section>
         </q-card>
 
-        <div v-if="filteredItems.length === 0" class="text-center q-pa-xl text-grey-5">
+        <div v-if="!store.loading && filteredItems.length === 0" class="text-center q-pa-xl text-grey-5">
           <q-icon name="sentiment_dissatisfied" size="3rem" />
           <div class="text-h6 q-mt-md">Nenhum conteudo postado ainda.</div>
         </div>
@@ -40,18 +52,17 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { mockItems } from 'src/data/mockContent'
+import { useContentStore } from 'src/stores/content'
 
 const route = useRoute()
 const router = useRouter()
+const store = useContentStore()
 
 const type = computed(() => route.params.type)
 const isEstudo = computed(() => type.value === 'estudos')
-const items = ref(mockItems)
-
-const filteredItems = computed(() => items.value.filter((item) => item.tipo === type.value))
+const filteredItems = computed(() => store.itemsByType(type.value))
 
 const goBack = () => {
   router.push('/menu')
@@ -60,6 +71,10 @@ const goBack = () => {
 const openPdf = (url) => {
   window.open(url, '_blank')
 }
+
+onMounted(() => {
+  store.loadItems()
+})
 </script>
 
 <style scoped>
