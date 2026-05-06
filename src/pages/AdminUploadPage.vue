@@ -6,7 +6,24 @@
         <q-btn round flat icon="arrow_back" color="grey-8" @click="goBack" />
       </div>
 
-      <q-card class="shadow-2 q-pa-md rounded-borders">
+      <q-card v-if="!isAuthenticated" class="shadow-2 q-pa-md rounded-borders q-mb-lg">
+        <div class="text-subtitle1 text-weight-medium q-mb-md">Acesso administrativo</div>
+        <q-form class="q-gutter-md" @submit.prevent="login">
+          <q-input v-model="credentials.usuario" label="Usuario" outlined dense :rules="[requiredRule]" />
+          <q-input
+            v-model="credentials.senha"
+            label="Senha"
+            type="password"
+            outlined
+            dense
+            :rules="[requiredRule]"
+          />
+          <q-btn class="full-width" color="primary" unelevated type="submit" label="Entrar" />
+        </q-form>
+        <div class="text-caption text-grey-6 q-mt-sm">Credenciais atuais: usuario `adm` e senha `admin`.</div>
+      </q-card>
+
+      <q-card v-else class="shadow-2 q-pa-md rounded-borders">
         <q-form class="q-gutter-md" @submit.prevent="submitForm">
           <q-input v-model="form.titulo" label="Titulo" outlined dense :rules="[requiredRule]" />
           <q-input v-model="form.legenda" label="Legenda" type="textarea" autogrow outlined dense />
@@ -53,7 +70,7 @@
         </q-form>
       </q-card>
 
-      <div class="q-mt-xl">
+      <div v-if="isAuthenticated" class="q-mt-xl">
         <q-banner
           v-if="store.usingMock"
           class="bg-amber-1 text-amber-10 rounded-borders q-mb-md"
@@ -84,7 +101,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { mockFormDefaults } from 'src/data/mockContent'
@@ -93,9 +110,14 @@ import { useContentStore } from 'src/stores/content'
 const $q = useQuasar()
 const router = useRouter()
 const store = useContentStore()
+const isAuthenticated = ref(false)
 
 const form = reactive({
   ...mockFormDefaults,
+})
+const credentials = reactive({
+  usuario: '',
+  senha: '',
 })
 
 const tipoOptions = [
@@ -113,6 +135,26 @@ const resetForm = () => {
   form.data = ''
   form.tipo = 'estudos'
   form.arquivo = null
+}
+
+const login = () => {
+  const isValid = credentials.usuario === 'adm' && credentials.senha === 'admin'
+  if (!isValid) {
+    $q.notify({
+      type: 'negative',
+      message: 'Usuario ou senha invalidos.',
+    })
+    return
+  }
+
+  sessionStorage.setItem('admin-auth', 'ok')
+  isAuthenticated.value = true
+  credentials.usuario = ''
+  credentials.senha = ''
+  $q.notify({
+    type: 'positive',
+    message: 'Acesso administrativo liberado.',
+  })
 }
 
 const submitForm = async () => {
@@ -147,6 +189,7 @@ const goBack = () => {
 }
 
 onMounted(() => {
+  isAuthenticated.value = sessionStorage.getItem('admin-auth') === 'ok'
   store.loadItems()
 })
 </script>

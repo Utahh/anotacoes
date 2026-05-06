@@ -39,6 +39,21 @@ Tabela esperada no banco (`conteudos`):
 
 Com variaveis ausentes, o app cai automaticamente para mock local.
 
+### SQL pronto
+
+Use o arquivo `supabase/setup.sql` no SQL Editor do Supabase.
+Ele cria:
+- tabela `conteudos`
+- tabela `admin_users`
+- bucket `pdfs`
+- politicas RLS de leitura/upload
+
+Credencial administrativa solicitada:
+- usuario: `adm`
+- senha: `admin`
+
+No app, a tela `/admin` pede esse login antes do upload.
+
 ## Publicacao web (GitHub Pages)
 
 Workflow: `.github/workflows/deploy-pages.yml`.
