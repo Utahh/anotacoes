@@ -36,13 +36,46 @@ for select
 to anon, authenticated
 using (true);
 
--- Escrita apenas para usuarios autenticados do Supabase Auth
-drop policy if exists "Authenticated insert conteudos" on public.conteudos;
-create policy "Authenticated insert conteudos"
+-- Escrita liberada para simplicidade (sem Supabase Auth no app)
+drop policy if exists "Public insert conteudos" on public.conteudos;
+create policy "Public insert conteudos"
 on public.conteudos
 for insert
-to authenticated
+to anon, authenticated
 with check (true);
+
+drop policy if exists "Public update conteudos" on public.conteudos;
+create policy "Public update conteudos"
+on public.conteudos
+for update
+to anon, authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Public delete conteudos" on public.conteudos;
+create policy "Public delete conteudos"
+on public.conteudos
+for delete
+to anon, authenticated
+using (true);
+
+-- Remove policy antiga caso exista
+drop policy if exists "Authenticated insert conteudos" on public.conteudos;
+drop policy if exists "Authenticated update conteudos" on public.conteudos;
+drop policy if exists "Authenticated delete conteudos" on public.conteudos;
+
+-- Mantido bloqueio da tabela admin para anon
+drop policy if exists "Public read admin_users" on public.admin_users;
+drop policy if exists "Public write admin_users" on public.admin_users;
+drop policy if exists "Authenticated write admin_users" on public.admin_users;
+
+-- Upload de PDF liberado para simplicidade (sem Supabase Auth no app)
+drop policy if exists "Public upload pdfs" on storage.objects;
+create policy "Public upload pdfs"
+on storage.objects
+for insert
+to anon, authenticated
+with check (bucket_id = 'pdfs');
 
 -- Nao expor tabela de admin diretamente ao cliente anonimo
 drop policy if exists "Block anon admin_users select" on public.admin_users;
@@ -73,10 +106,5 @@ for select
 to public
 using (bucket_id = 'pdfs');
 
--- Upload apenas para authenticated
+-- Remove policy antiga caso exista
 drop policy if exists "Authenticated upload pdfs" on storage.objects;
-create policy "Authenticated upload pdfs"
-on storage.objects
-for insert
-to authenticated
-with check (bucket_id = 'pdfs');
