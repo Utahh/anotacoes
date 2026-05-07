@@ -46,7 +46,11 @@ Ele cria:
 - tabela `conteudos`
 - tabela `admin_users`
 - bucket `pdfs`
-- politicas RLS de leitura/upload
+- politicas RLS para CRUD completo (`select`, `insert`, `update`, `delete`) em `conteudos`
+- politicas de leitura e upload no bucket `pdfs`
+
+Se o botao de excluir/editar nao funcionar no Supabase, execute novamente o `supabase/setup.sql`
+para reaplicar as policies atualizadas.
 
 Credencial administrativa solicitada:
 - usuario: `adm`
